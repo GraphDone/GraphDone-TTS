@@ -1,0 +1,69 @@
+# Test Configuration for TTS Server
+# This file defines test parameters and expected behaviors
+
+test_settings:
+  # Service endpoints
+  api_port: 8000
+  web_port: 3000
+
+  # Timeouts and retries
+  max_retries: 30
+  retry_delay: 2  # seconds
+  request_timeout: 30  # seconds
+
+  # Test data
+  test_texts:
+    - "Hello, this is a test message"
+    - "Testing TTS functionality with punctuation!"
+    - "Cache test message"
+    - "Performance test"
+    - "Batch generation test"
+
+  test_voices:
+    - "amy_medium"
+    - "ryan_low"
+    - "lessac_medium"
+
+  test_formats:
+    - "wav"
+    - "mp3"
+
+# Expected test results
+expected_results:
+  # Minimum file sizes (bytes)
+  min_wav_size: 1000
+  min_mp3_size: 500
+
+  # Performance benchmarks
+  max_generation_time: 10  # seconds per request
+  max_batch_time: 30       # seconds for batch generation
+
+  # Cache behavior
+  cache_hit_improvement: 0.5  # Cache should be at least 50% faster
+
+# Test scenarios
+test_scenarios:
+  basic_functionality:
+    - health_check
+    - voices_list
+    - single_generation
+    - file_download
+
+  caching:
+    - cache_miss
+    - cache_hit
+    - cache_cleanup
+
+  batch_processing:
+    - batch_generation
+    - concurrent_requests
+
+  performance:
+    - response_time
+    - throughput_test
+    - memory_usage
+
+  security:
+    - rate_limiting
+    - input_validation
+    - file_access_protection

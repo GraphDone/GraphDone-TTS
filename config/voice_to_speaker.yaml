@@ -1,0 +1,10 @@
+# Voice to speaker mapping for PiperTTS
+# Format: voice_name: speaker_model_path
+
+alloy: en_US-lessac-medium
+echo: en_US-danny-low
+fable: en_GB-alan-medium
+onyx: en_US-ryan-medium
+nova: en_US-amy-medium
+shimmer: en_US-lessac-medium
+

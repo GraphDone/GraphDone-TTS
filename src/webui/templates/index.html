@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PiperTTS Server</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent: #238636;
+            --accent-hover: #2ea043;
+            --border: #30363d;
+            --error: #f85149;
+            --success: #3fb950;
+            --warning: #f0883e;
+            --info: #58a6ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--info) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .status {
+            padding: 16px 24px;
+            border-radius: 12px;
+            margin-bottom: 32px;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+
+        .status.online {
+            background: rgba(63, 185, 80, 0.1);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .status.offline {
+            background: rgba(248, 81, 73, 0.1);
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+        }
+
+        .card h2 {
+            margin-bottom: 24px;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        textarea, select, input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        textarea:focus, select:focus, input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(35, 134, 54, 0.1);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+        .format-info {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            border-left: 3px solid var(--info);
+        }
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0;
+        }
+        .nav-tab {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 12px 20px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+        }
+        .nav-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            background: var(--bg-secondary);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .api-info h3 {
+            color: var(--accent);
+            margin: 24px 0 12px 0;
+            font-size: 1.2rem;
+        }
+        .api-info code {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            display: block;
+            margin: 8px 0;
+            color: var(--info);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .api-links {
+            display: flex;
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .endpoint {
+            margin: 20px 0;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
+        .endpoint h4 {
+            color: var(--success);
+            margin: 0 0 8px 0;
+        }
+        .info-section {
+            margin: 24px 0;
+        }
+        .info-section h3 {
+            color: var(--accent);
+            margin: 0 0 12px 0;
+        }
+        .voice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .voice-item {
+            background: var(--bg-tertiary);
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 3px solid var(--info);
+        }
+        .perf-info, .quality-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .perf-item, .quality-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+        }
+        .quality-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .quality-badge.high {
+            background: var(--success);
+            color: white;
+        }
+        .quality-badge.medium {
+            background: var(--warning);
+            color: white;
+        }
+        .quality-badge.low {
+            background: var(--info);
+            color: white;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(35, 134, 54, 0.3);
+        }
+
+        .btn:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--border);
+            box-shadow: 0 8px 25px rgba(45, 55, 72, 0.3);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .progress-section {
+            margin: 24px 0;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--info) 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .results-section {
+            margin-top: 32px;
+            display: none;
+        }
+
+        .result-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .voice-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: capitalize;
+        }
+
+        .cache-indicator {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: var(--info);
+            color: white;
+        }
+
+        .cache-indicator.cached {
+            background: var(--warning);
+        }
+
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .audio-player {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .download-btn {
+            padding: 8px 16px;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .error-message {
+            color: var(--error);
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid var(--error);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+        }
+
+        .success-message {
+            color: var(--success);
+            background: rgba(63, 185, 80, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 32px;
+        }
+
+        .spinner {
+            border: 3px solid var(--bg-tertiary);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            margin-top: 48px;
+            padding: 24px;
+            text-align: center;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .batch-results {
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-primary);
+        }
+
+        .batch-summary {
+            background: var(--bg-tertiary);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ PiperTTS Server</h1>
+            <p>Native PiperTTS with Multi-Voice Generation & Caching</p>
+        </div>
+
+        <div id="status" class="status">
+            <span id="status-text">Checking server status...</span>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="tts">🎵 TTS Generator</button>
+            <button class="nav-tab" data-tab="api">📋 API Docs</button>
+            <button class="nav-tab" data-tab="server">⚙️ Server Info</button>
+        </div>
+
+        <div class="main-content">
+            <!-- TTS Generator Tab -->
+            <div id="tts-tab" class="tab-content active">
+                <!-- Single Voice Generation -->
+                <div class="card">
+                    <h2>Single Voice Generation</h2>
+                <form id="tts-form">
+                    <div class="form-group">
+                        <label for="text">Text to Speech:</label>
+                        <textarea id="text" name="text" placeholder="Enter the text you want to convert to speech..." required></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="voice">Voice & Quality:</label>
+                            <select id="voice" name="voice">
+                                <option value="amy_medium" selected>Amy - Medium Quality</option>
+                                <option value="lessac_medium">Lessac - Medium Quality</option>
+                                <option value="ryan_medium">Ryan - Medium Quality</option>
+                                <option value="danny_low">Danny - Low Quality ⚡</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="format">Audio Format:</label>
+                            <select id="format" name="format">
+                                <option value="wav" selected>WAV (Fastest, Recommended) ⚡</option>
+                                <option value="mp3">MP3 (Smaller file, slower processing)</option>
+                            </select>
+                            <div class="format-info">
+                                💡 WAV format is preferred for faster processing and better quality
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn" id="generate-btn">
+                            🎵 Generate Speech
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="generate-all-btn">
+                            🎭 Generate All Voices
+                        </button>
+                    </div>
+                </form>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Generating speech, please wait...</p>
+                </div>
+
+                <div class="progress-section" id="batch-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-text" id="progress-text">Processing voices...</div>
+                </div>
+
+                <div id="single-result" class="results-section">
+                    <div id="single-result-content"></div>
+                </div>
+            </div>
+
+            <!-- Batch Results -->
+            <div class="card">
+                <h2>Generated Audio Files</h2>
+                <div id="batch-results" class="results-section">
+                    <p class="text-secondary">Generated audio files will appear here</p>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- API Docs Tab -->
+        <div id="api-tab" class="tab-content">
+            <div class="card">
+                <h2>📋 API Documentation</h2>
+                <div class="api-info">
+                    <h3>Base URL</h3>
+                    <code>http://localhost:8000</code>
+
+                    <h3>Quick Links</h3>
+                    <div class="api-links">
+                        <a href="http://localhost:8000/docs" target="_blank" class="btn">
+                            📖 Interactive API Docs (Swagger)
+                        </a>
+                        <a href="http://localhost:8000/redoc" target="_blank" class="btn">
+                            📑 ReDoc Documentation
+                        </a>
+                    </div>
+
+                    <h3>Key Endpoints</h3>
+                    <div class="endpoint">
+                        <h4>POST /generate</h4>
+                        <p>Generate speech from text</p>
+                        <code>curl -X POST "http://localhost:8000/generate" -H "Content-Type: application/json" -d '{"text":"Hello world","voice":"amy_medium","format":"wav"}'</code>
+                    </div>
+
+                    <div class="endpoint">
+                        <h4>GET /voices</h4>
+                        <p>List all available voices</p>
+                        <code>curl "http://localhost:8000/voices"</code>
+                    </div>
+
+                    <div class="endpoint">
+                        <h4>GET /download/{filename}?format={format}</h4>
+                        <p>Download generated audio with optional format conversion</p>
+                        <code>curl "http://localhost:8000/download/speech.wav?format=mp3" --output audio.mp3</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Server Info Tab -->
+        <div id="server-tab" class="tab-content">
+            <div class="card">
+                <h2>⚙️ Server Information</h2>
+                <div id="server-info-content">
+                    <div class="info-section">
+                        <h3>Voice Models</h3>
+                        <div id="voice-count">Loading...</div>
+                        <div id="voice-list" class="voice-grid"></div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>Performance</h3>
+                        <div class="perf-info">
+                            <div class="perf-item">
+                                <span>Parallel Workers:</span>
+                                <span id="worker-count">Loading...</span>
+                            </div>
+                            <div class="perf-item">
+                                <span>Cache Directory:</span>
+                                <span>/tmp/tts_cache</span>
+                            </div>
+                            <div class="perf-item">
+                                <span>Format Optimization:</span>
+                                <span>WAV generation + on-demand conversion</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>Quality Levels</h3>
+                        <div class="quality-info">
+                            <div class="quality-item">
+                                <span class="quality-badge high">High Quality</span>
+                                <span>Best audio quality, larger files</span>
+                            </div>
+                            <div class="quality-item">
+                                <span class="quality-badge medium">Medium Quality</span>
+                                <span>Balanced quality and performance</span>
+                            </div>
+                            <div class="quality-item">
+                                <span class="quality-badge low">Low Quality</span>
+                                <span>Fastest generation, smaller files</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <div class="footer">
+            <p>Powered by Native PiperTTS | Fast Local Voice Synthesis with Smart Caching</p>
+        </div>
+    </div>
+
+    <script>
+        let currentText = '';
+        let currentFormat = 'mp3';
+
+        // Check server status on load
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                const statusEl = document.getElementById('status');
+                const statusText = document.getElementById('status-text');
+
+                if (data.status === 'online') {
+                    statusEl.className = 'status online';
+                    statusText.textContent = '✅ TTS Server Online';
+                } else {
+                    statusEl.className = 'status offline';
+                    statusText.textContent = '❌ TTS Server Offline';
+                }
+            } catch (error) {
+                const statusEl = document.getElementById('status');
+                const statusText = document.getElementById('status-text');
+                statusEl.className = 'status offline';
+                statusText.textContent = '❌ Connection Error';
+            }
+        }
+
+        // Load available voices
+        async function loadVoices() {
+            try {
+                const response = await fetch('/api/voices');
+                const voices = await response.json();
+                const voiceSelect = document.getElementById('voice');
+                voiceSelect.innerHTML = '';
+
+                // Group voices by quality and type
+                const voiceGroups = {
+                    'US English - High Quality': [],
+                    'US English - Medium Quality': [],
+                    'US English - Low Quality (Faster)': [],
+                    'British English': [],
+                    'International': [],
+                    'OpenAI Compatible': []
+                };
+
+                for (const [name, model] of Object.entries(voices)) {
+                    const displayName = name.replace('_', ' - ').replace(/([a-z])([A-Z])/g, '$1 $2');
+                    const option = document.createElement('option');
+                    option.value = name;
+
+                    if (name.includes('_high') || name === 'ljspeech_high') {
+                        option.textContent = `${displayName} 🌟`;
+                        voiceGroups['US English - High Quality'].push(option);
+                    } else if (name.includes('_low') || name.includes('x_low')) {
+                        option.textContent = `${displayName} ⚡`;
+                        voiceGroups['US English - Low Quality (Faster)'].push(option);
+                    } else if (name.includes('_medium') && (name.includes('en_US') || ['amy_medium', 'lessac_medium', 'ryan_medium'].includes(name))) {
+                        option.textContent = displayName;
+                        voiceGroups['US English - Medium Quality'].push(option);
+                    } else if (name.includes('alan') || name.includes('jenny')) {
+                        option.textContent = displayName;
+                        voiceGroups['British English'].push(option);
+                    } else if (['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'].includes(name)) {
+                        option.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+                        voiceGroups['OpenAI Compatible'].push(option);
+                    } else {
+                        option.textContent = displayName;
+                        voiceGroups['International'].push(option);
+                    }
+                }
+
+                // Add grouped options to select
+                for (const [groupName, options] of Object.entries(voiceGroups)) {
+                    if (options.length > 0) {
+                        const optgroup = document.createElement('optgroup');
+                        optgroup.label = groupName;
+                        options.forEach(option => optgroup.appendChild(option));
+                        voiceSelect.appendChild(optgroup);
+                    }
+                }
+
+                // Set default selection to amy_medium if available
+                if (voices.amy_medium) {
+                    voiceSelect.value = 'amy_medium';
+                }
+
+            } catch (error) {
+                console.error('Failed to load voices:', error);
+            }
+        }
+
+        // Single voice generation
+        document.getElementById('tts-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const data = {
+                text: formData.get('text'),
+                voice: formData.get('voice'),
+                format: formData.get('format')
+            };
+
+            currentText = data.text;
+            currentFormat = data.format;
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('single-result').style.display = 'none';
+            document.getElementById('generate-btn').disabled = true;
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('generate-btn').disabled = false;
+
+                displaySingleResult(result, data.voice);
+
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('generate-btn').disabled = false;
+                displayError(error.message);
+            }
+        });
+
+        // Batch generation
+        document.getElementById('generate-all-btn').addEventListener('click', async function() {
+            const text = document.getElementById('text').value;
+            const format = document.getElementById('format').value;
+
+            if (!text) {
+                alert('Please enter text to generate speech');
+                return;
+            }
+
+            currentText = text;
+            currentFormat = format;
+
+            // Show progress
+            document.getElementById('batch-progress').style.display = 'block';
+            document.getElementById('generate-all-btn').disabled = true;
+            updateProgress(0, 1, 'Starting parallel generation...');
+
+            try {
+                // Use the parallel batch endpoint
+                const response = await fetch('/api/generate-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        format: format
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    updateProgress(1, 1, `Completed in ${result.elapsed_time.toFixed(2)}s using ${result.workers_used} workers`);
+                    setTimeout(() => displayBatchResults(result), 500); // Show completion briefly
+                } else {
+                    displayError('Batch generation failed: ' + result.error);
+                }
+
+            } catch (error) {
+                displayError('Batch generation failed: ' + error.message);
+            } finally {
+                setTimeout(() => {
+                    document.getElementById('batch-progress').style.display = 'none';
+                    document.getElementById('generate-all-btn').disabled = false;
+                }, 1000);
+            }
+        });
+
+        function updateProgress(completed, total, text) {
+            const percentage = (completed / total) * 100;
+            document.getElementById('progress-fill').style.width = percentage + '%';
+            document.getElementById('progress-text').textContent = text;
+        }
+
+        function displaySingleResult(result, voice) {
+            const resultEl = document.getElementById('single-result');
+            const contentEl = document.getElementById('single-result-content');
+
+            if (result.success) {
+                contentEl.innerHTML = `
+                    <div class="result-item">
+                        <div class="result-header">
+                            <span class="voice-name">${voice}</span>
+                            ${result.cached ? '<span class="cache-indicator cached">Cached</span>' : '<span class="cache-indicator">Generated</span>'}
+                        </div>
+                        <div class="audio-controls">
+                            <audio controls class="audio-player" src="/api/download/${result.filename}">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <a href="/api/download/${result.filename}" class="btn download-btn" download>
+                                📥 Download
+                            </a>
+                        </div>
+                        <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
+                            Size: ${(result.size / 1024).toFixed(1)} KB
+                        </div>
+                    </div>
+                `;
+            } else {
+                contentEl.innerHTML = `
+                    <div class="error-message">
+                        <strong>Generation Failed:</strong> ${result.error}
+                    </div>
+                `;
+            }
+
+            resultEl.style.display = 'block';
+        }
+
+        function displayBatchResults(data) {
+            const batchEl = document.getElementById('batch-results');
+            const results = data.results || data;
+            const successful = results.filter(r => r.success).length;
+
+            let html = `
+                <div class="batch-summary">
+                    <div>
+                        <strong>Batch Complete:</strong> ${successful}/${results.length} voices generated
+                        ${data.elapsed_time ? `in ${data.elapsed_time.toFixed(2)}s` : ''}
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        ${results.filter(r => r.cached).length} cached • ${data.workers_used || 'N/A'} parallel workers
+                    </div>
+                </div>
+                <div class="batch-results">
+            `;
+
+            results.forEach(result => {
+                if (result.success) {
+                    html += `
+                        <div class="result-item">
+                            <div class="result-header">
+                                <span class="voice-name">${result.voice}</span>
+                                ${result.cached ? '<span class="cache-indicator cached">Cached</span>' : '<span class="cache-indicator">Generated</span>'}
+                            </div>
+                            <div class="audio-controls">
+                                <audio controls class="audio-player" src="/api/download/${result.filename}">
+                                    Your browser does not support the audio element.
+                                </audio>
+                                <a href="/api/download/${result.filename}" class="btn download-btn" download>
+                                    📥 Download
+                                </a>
+                            </div>
+                            <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                                ${(result.size / 1024).toFixed(1)} KB
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="result-item">
+                            <div class="result-header">
+                                <span class="voice-name">${result.voice}</span>
+                            </div>
+                            <div class="error-message">
+                                ${result.error}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            html += '</div>';
+            batchEl.innerHTML = html;
+            batchEl.style.display = 'block';
+        }
+
+        function displayError(message) {
+            const resultEl = document.getElementById('single-result');
+            const contentEl = document.getElementById('single-result-content');
+
+            contentEl.innerHTML = `
+                <div class="error-message">
+                    <strong>Error:</strong> ${message}
+                </div>
+            `;
+
+            resultEl.style.display = 'block';
+        }
+
+        // Tab switching functionality
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabId = this.dataset.tab;
+
+                // Update active tab
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                // Update active content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+
+                // Load server info when that tab is clicked
+                if (tabId === 'server') {
+                    loadServerInfo();
+                }
+            });
+        });
+
+        // Load server information
+        async function loadServerInfo() {
+            try {
+                const [voicesResponse, statusResponse] = await Promise.all([
+                    fetch('/api/voices'),
+                    fetch('/api/status')
+                ]);
+
+                const voices = await voicesResponse.json();
+                const status = await statusResponse.json();
+
+                // Update voice count and list
+                const voiceCount = Object.keys(voices).length;
+                document.getElementById('voice-count').textContent = `${voiceCount} voices available`;
+
+                const voiceList = document.getElementById('voice-list');
+                voiceList.innerHTML = '';
+
+                Object.entries(voices).forEach(([name, model]) => {
+                    const voiceItem = document.createElement('div');
+                    voiceItem.className = 'voice-item';
+
+                    let quality = 'Medium';
+                    let qualityClass = 'medium';
+                    if (name.includes('high')) {
+                        quality = 'High';
+                        qualityClass = 'high';
+                    } else if (name.includes('low') || name.includes('x_low')) {
+                        quality = 'Low';
+                        qualityClass = 'low';
+                    }
+
+                    voiceItem.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><strong>${name}</strong></span>
+                            <span class="quality-badge ${qualityClass}">${quality}</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                            ${model}
+                        </div>
+                    `;
+                    voiceList.appendChild(voiceItem);
+                });
+
+                // Update worker count (from app.py MAX_WORKERS)
+                document.getElementById('worker-count').textContent = 'Up to 8 parallel workers';
+
+            } catch (error) {
+                console.error('Failed to load server info:', error);
+                document.getElementById('voice-count').textContent = 'Error loading server info';
+            }
+        }
+
+        // Update download links to handle format conversion
+        function updateDownloadLink(filename, format) {
+            if (format === 'mp3') {
+                return `/api/download/${filename}?format=mp3`;
+            } else {
+                return `/api/download/${filename}`;
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            checkStatus();
+            loadVoices();
+        });
+    </script>
+</body>
+</html>

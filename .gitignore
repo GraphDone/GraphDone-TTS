@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Audio files (test outputs)
+*.wav
+*.mp3
+*.opus
+*.aac
+*.flac
+*.pcm
+
+# Docker
+docker-compose.override.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Piper models cache
+models/
+voices/*.onnx
+voices/*.json
+
+# Config overrides
+config/local.yml
+
+# Environment files
+.env
+.env.*
+*.env
+
+# Secrets and keys
+*.key
+*.pem
+*.crt
+*.pfx
+secrets/
+credentials/

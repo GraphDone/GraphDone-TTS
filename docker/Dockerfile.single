@@ -1,0 +1,74 @@
+FROM python:3.11-slim
+
+# Create non-root user
+RUN groupadd -r tts && useradd -r -g tts tts
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    curl \
+    ffmpeg \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/cache/apt/*
+
+WORKDIR /app
+
+# Copy requirements for both services
+COPY piper-server/requirements.txt ./piper-requirements.txt
+COPY webui/requirements.txt ./webui-requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r piper-requirements.txt
+RUN pip install --no-cache-dir -r webui-requirements.txt
+
+# Copy all source code
+COPY piper-server/ ./piper-server/
+COPY webui/ ./webui/
+COPY voices/ ./voices/
+COPY config/ ./config/
+
+# Create directories with proper ownership
+RUN mkdir -p /var/log/supervisor /app/output/cache \
+    && chown -R tts:tts /app /var/log/supervisor \
+    && chmod 755 /app/output/cache
+
+COPY <<'EOF' /etc/supervisor/conf.d/supervisord.conf
+[supervisord]
+nodaemon=true
+user=tts
+
+[program:piper-tts]
+command=python /app/piper-server/piper_server.py
+directory=/app/piper-server
+environment=VOICES_DIR="/app/voices",CONFIG_DIR="/app/config"
+autostart=true
+autorestart=true
+stdout_logfile=/var/log/supervisor/piper-tts.log
+stderr_logfile=/var/log/supervisor/piper-tts.log
+
+[program:webui]
+command=python /app/webui/app.py
+directory=/app/webui
+environment=TTS_API_URL="http://localhost:8000"
+autostart=true
+autorestart=true
+stdout_logfile=/var/log/supervisor/webui.log
+stderr_logfile=/var/log/supervisor/webui.log
+EOF
+
+# Expose both ports
+EXPOSE 8000 3000
+
+# Declare volume for persistent cache storage
+VOLUME ["/app/output"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health && curl -f http://localhost:3000/ || exit 1
+
+# Switch to non-root user
+USER tts
+
+# Start supervisor
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

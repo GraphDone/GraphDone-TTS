@@ -1,0 +1,15 @@
+services:
+  openedai-speech:
+    image: ghcr.io/matatonic/openedai-speech-min
+    container_name: openedai-speech
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./voices:/app/voices
+      - ./config:/app/config
+    environment:
+      - TTS_HOME=/app/voices
+      - HF_HOME=/app/voices
+    command: ["python", "-m", "speech", "--host", "0.0.0.0", "--port", "8000", "--xtts_device", "none"]
+    restart: unless-stopped
+

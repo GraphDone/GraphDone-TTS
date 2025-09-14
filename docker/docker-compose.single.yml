@@ -1,0 +1,42 @@
+services:
+  tts-server-all:
+    build:
+      context: .
+      dockerfile: Dockerfile.single
+    container_name: tts-server-all
+    # BRIDGE MODE (Default - Secure, isolated network)
+    # Uncomment the ports section below to use bridge mode with port mapping
+    ports:
+      - "8000:8000"  # TTS API
+      - "3000:3000"  # Web UI
+
+    # HOST MODE (Uncomment network_mode and comment out ports section above)
+    # WARNING: This exposes services directly on host network - less secure
+    # network_mode: host
+
+    restart: unless-stopped
+    volumes:
+      # Optional: Mount external voice directory if you want to add more voices
+      # - ./voices:/app/voices
+      # Optional: Mount external config if you want to customize voice mappings
+      # - ./config:/app/config
+
+    # Environment variables for configuration
+    environment:
+      - PYTHONUNBUFFERED=1
+
+    # Resource limits (optional)
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+# Optional: Create custom network for isolation (bridge mode only)
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -1,0 +1,47 @@
+# GraphDone-TTS Docker Compose Configuration
+# For development and testing
+
+version: '3.8'
+
+services:
+  # Option 1: Use pre-built minimal image (API only)
+  tts-api:
+    image: ghcr.io/matatonic/openedai-speech-min
+    container_name: graphdone-tts-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./voices:/app/voices
+      - ./config:/app/config
+    environment:
+      - TTS_HOME=/app/voices
+      - HF_HOME=/app/voices
+    command: ["python", "-m", "speech", "--host", "0.0.0.0", "--port", "8000", "--xtts_device", "none"]
+    restart: unless-stopped
+    profiles: ["minimal"]
+
+  # Option 2: Build complete solution (API + Web UI)
+  tts-complete:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.single
+    container_name: graphdone-tts-complete
+    ports:
+      - "8000:8000"  # TTS API
+      - "3000:3000"  # Web UI
+    volumes:
+      - ./voices:/app/voices
+      - ./config:/app/config
+      - tts-cache:/app/output
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    profiles: ["complete"]
+
+volumes:
+  tts-cache:
+    driver: local
+
+# Usage:
+# Minimal API only:  docker-compose --profile minimal up
+# Complete with UI:  docker-compose --profile complete up
