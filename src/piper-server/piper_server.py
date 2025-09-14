@@ -253,4 +253,4 @@ if __name__ == '__main__':
     logger.info(f"Available voices: {list(voices.keys())}")
 
     # Start server
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=9000)

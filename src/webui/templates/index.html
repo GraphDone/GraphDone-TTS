@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PiperTTS Server</title>
+    <title>GraphDone TTS Server</title>
     <style>
         :root {
             --bg-primary: #0d1117;
@@ -64,19 +64,22 @@
         }
 
         .status {
-            padding: 16px 24px;
-            border-radius: 12px;
+            padding: 18px 28px;
+            border-radius: 16px;
             margin-bottom: 32px;
             text-align: center;
             font-weight: 600;
             border: 1px solid var(--border);
             background: var(--bg-secondary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
         }
 
         .status.online {
-            background: rgba(63, 185, 80, 0.1);
+            background: linear-gradient(135deg, rgba(63, 185, 80, 0.1) 0%, rgba(63, 185, 80, 0.05) 100%);
             border-color: var(--success);
             color: var(--success);
+            box-shadow: 0 4px 15px rgba(63, 185, 80, 0.2);
         }
 
         .status.offline {
@@ -91,8 +94,74 @@
             gap: 32px;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
             .main-content {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .container {
+                padding: 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 24px 16px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .btn-group {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .audio-controls {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+
+            .nav-tabs {
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+
+            .nav-tab {
+                flex: 1;
+                min-width: 120px;
+                text-align: center;
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 12px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .voice-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -100,8 +169,16 @@
         .card {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 32px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
         }
 
         .card h2 {
@@ -136,6 +213,7 @@
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(35, 134, 54, 0.1);
+            transform: translateY(-1px);
         }
 
         textarea {
@@ -173,21 +251,43 @@
             border: none;
             color: var(--text-secondary);
             padding: 12px 20px;
-            border-radius: 8px 8px 0 0;
+            border-radius: 12px 12px 0 0;
             cursor: pointer;
             font-size: 14px;
             font-weight: 500;
-            transition: all 0.2s;
-            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            position: relative;
+        }
+
+        .nav-tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--info) 100%);
+            opacity: 0;
+            border-radius: 12px 12px 0 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
         }
         .nav-tab:hover {
             color: var(--text-primary);
             background: var(--bg-secondary);
+            transform: translateY(-1px);
         }
+
         .nav-tab.active {
             color: var(--accent);
             border-bottom-color: var(--accent);
             background: var(--bg-secondary);
+            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.2);
+        }
+
+        .nav-tab.active::before {
+            opacity: 0.1;
         }
         .tab-content {
             display: none;
@@ -279,26 +379,33 @@
         }
 
         .btn {
-            background: var(--accent);
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
             color: white;
             padding: 12px 24px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            box-shadow: 0 4px 15px rgba(35, 134, 54, 0.2);
+            position: relative;
+            overflow: hidden;
         }
 
         .btn:hover:not(:disabled) {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 8px 25px rgba(35, 134, 54, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(35, 134, 54, 0.4);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 4px 15px rgba(35, 134, 54, 0.3);
         }
 
         .btn:disabled {
@@ -343,6 +450,24 @@
             background: linear-gradient(90deg, var(--accent) 0%, var(--info) 100%);
             width: 0%;
             transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(35, 134, 54, 0.5);
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
 
         .progress-text {
@@ -363,6 +488,7 @@
             padding: 20px;
             margin-bottom: 16px;
         }
+
 
         .result-header {
             display: flex;
@@ -401,6 +527,7 @@
             min-width: 200px;
         }
 
+
         .download-btn {
             padding: 8px 16px;
             font-size: 12px;
@@ -435,15 +562,36 @@
             border: 3px solid var(--bg-tertiary);
             border-top: 3px solid var(--accent);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             animation: spin 1s linear infinite;
             margin: 0 auto 16px;
+            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.3);
         }
 
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-in {
+            animation: slideIn 0.4s ease-out;
         }
 
         .footer {
@@ -478,8 +626,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎙️ PiperTTS Server</h1>
-            <p>Native PiperTTS with Multi-Voice Generation & Caching</p>
+            <h1>🎙️ GraphDone TTS Server</h1>
+            <p>Advanced Text-to-Speech with Multi-Voice Generation & Smart Caching</p>
         </div>
 
         <div id="status" class="status">
@@ -568,7 +716,7 @@
         <!-- API Docs Tab -->
         <div id="api-tab" class="tab-content">
             <div class="card">
-                <h2>📋 API Documentation</h2>
+                <h2>📋 GraphDone TTS API</h2>
                 <div class="api-info">
                     <h3>Base URL</h3>
                     <code>http://localhost:8000</code>
@@ -657,7 +805,7 @@
         </div>
 
         <div class="footer">
-            <p>Powered by Native PiperTTS | Fast Local Voice Synthesis with Smart Caching</p>
+            <p>Powered by GraphDone TTS | Advanced Voice Synthesis with Intelligent Caching</p>
         </div>
     </div>
 

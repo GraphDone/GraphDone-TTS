@@ -255,7 +255,7 @@ limiter = Limiter(
 limiter.init_app(app)
 
 # TTS API endpoint
-TTS_API_URL = "http://piper-tts:8000"
+TTS_API_URL = "http://localhost:9000"
 
 # Parallel processing configuration
 MAX_WORKERS = min(cpu_count(), 8)  # Use up to 8 threads, or CPU count if less
@@ -814,46 +814,17 @@ def download_file(filename):
 
 @app.route('/api/status')
 def get_status():
-    """Check TTS server status"""
+    """Check TTS server status - fast version"""
     try:
-        response = requests.get(f"{TTS_API_URL}/health", timeout=5)
-
-        # Add cache status
-        cache_size = get_cache_size()
-        cache_files_count = 0
-        access_data = load_access_log()
-        try:
-            cache_files_count = len([f for f in os.listdir(CACHE_DIR)
-                                   if f.endswith('.wav') or f.endswith('.mp3')])
-        except OSError:
-            pass
-
-        # Get user's current rate limit status
-        user_info = get_user_info()
-        user_id = user_info['user_id']
-        user_status = capacity_manager.get_user_status(user_id)
-
+        response = requests.get(f"{TTS_API_URL}/health", timeout=2)
         return jsonify({
             "status": "online" if response.status_code == 200 else "offline",
-            "url": TTS_API_URL,
-            "user_session": user_id,
-            "rate_limit_info": user_status,
-            "cache": {
-                "size_bytes": cache_size,
-                "size_mb": round(cache_size / 1024 / 1024, 2),
-                "max_size_gb": MAX_CACHE_SIZE_BYTES / 1024 / 1024 / 1024,
-                "usage_percent": round((cache_size / MAX_CACHE_SIZE_BYTES) * 100, 2),
-                "files_count": cache_files_count,
-                "directory": CACHE_DIR,
-                "total_accesses": sum(data.get("access_count", 0) for data in access_data.values()),
-                "tracked_files": len(access_data)
-            }
+            "url": TTS_API_URL
         })
     except:
         return jsonify({
             "status": "offline",
-            "url": TTS_API_URL,
-            "cache": {"error": "Could not get cache status"}
+            "url": TTS_API_URL
         })
 
 @app.route('/api/cache/cleanup', methods=['POST'])
@@ -896,4 +867,4 @@ def cleanup_cache():
         }), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3000, debug=True)
+    app.run(host='0.0.0.0', port=4000, debug=True)

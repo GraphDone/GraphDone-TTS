@@ -15,16 +15,16 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy requirements for both services
-COPY piper-server/requirements.txt ./piper-requirements.txt
-COPY webui/requirements.txt ./webui-requirements.txt
+COPY src/piper-server/requirements.txt ./piper-requirements.txt
+COPY src/webui/requirements.txt ./webui-requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r piper-requirements.txt
 RUN pip install --no-cache-dir -r webui-requirements.txt
 
 # Copy all source code
-COPY piper-server/ ./piper-server/
-COPY webui/ ./webui/
+COPY src/piper-server/ ./piper-server/
+COPY src/webui/ ./webui/
 COPY voices/ ./voices/
 COPY config/ ./config/
 
